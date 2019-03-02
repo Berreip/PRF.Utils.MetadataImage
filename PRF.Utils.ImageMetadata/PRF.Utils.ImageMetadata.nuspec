@@ -1,0 +1,27 @@
+﻿<package >
+  <metadata>
+    <id>PRF.Utils.ImageMetadata</id>
+    <version>1.0.0</version>
+    <title>PRF.Utils.ImageMetadata</title>
+    <authors>P. Bony</authors>
+    <owners>PRF</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://github.com/Berreip/PRF.Utils.Core/blob/master/LICENSE</licenseUrl>
+    <iconUrl>https://raw.githubusercontent.com/Berreip/PRF.Utils.Core/master/PRF_Icon.png</iconUrl>
+    <description>Composants permettant de facilement écrire et récupérer des métadonnées en JSON</description>
+    <releaseNotes>1.0.0 release</releaseNotes>
+    <copyright>PRF</copyright>
+    <tags>Metadata, Image, Json</tags>
+    <dependencies>
+      <dependency id="PRF.Utils.CoreComponents" version="1.0" />
+      <dependency id="Newtonsoft.Json" version="12.0" />
+      
+    </dependencies>
+
+  </metadata>
+  <files>
+    <file src="bin\$configuration$\PRF.Utils.WPF.dll" target="lib\net462" />
+    <file src="bin\$configuration$\PRF.Utils.WPF.xml" target="lib\net462" />
+  </files>
+
+</package>
