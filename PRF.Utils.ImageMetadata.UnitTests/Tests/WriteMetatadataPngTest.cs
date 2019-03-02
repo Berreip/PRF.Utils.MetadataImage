@@ -122,7 +122,7 @@ namespace PRF.Utils.ImageMetadata.UnitTests.Tests
             {
                 //Test
                 // créer un container vide:
-                var container = new MetadataContainer<UnitTestMetadata>
+                IMetadataContainer<UnitTestMetadata> container = new MetadataContainer<UnitTestMetadata>
                 {
                     {UnitTestMetadata.Metadata4, text}
                 };

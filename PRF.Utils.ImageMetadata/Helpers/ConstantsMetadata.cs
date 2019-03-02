@@ -1,6 +1,6 @@
 ﻿namespace PRF.Utils.ImageMetadata.Helpers
 {
-    internal class ConstantsMetadata
+    internal static class ConstantsMetadata
     {
         // native image format des PNG
         // => /tEXt or /[*]tEXt where * = 0 to N

@@ -60,7 +60,7 @@ namespace PRF.Utils.ImageMetadata.Managers
         /// </summary>
         /// <param name="file">le fichier servant de source à ce container</param>
         public MetadataContainer(FileInfo file) : this(ExtractRawMetadata(file)) { }
-        
+
         /// <summary>
         /// Constructeur qui encapsule les métadonnées données
         /// </summary>
@@ -80,10 +80,7 @@ namespace PRF.Utils.ImageMetadata.Managers
         /// <summary>
         /// Constructeur par défaut. il ne charge aucune données
         /// </summary>
-        public MetadataContainer()
-        {
-        }
-
+        public MetadataContainer() { }
 
         /// <inheritdoc />
         public void Add(TKey key, object metadata)
@@ -109,6 +106,7 @@ namespace PRF.Utils.ImageMetadata.Managers
             PngMetadataWriter.UpdateImageWithMetadata(file, GetQueries());
         }
 
+        /// <inheritdoc />
         public bool TryGetValue(TKey key, out object value)
         {
             return _reference.TryGetValue(key, out value);
