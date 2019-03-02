@@ -15,13 +15,6 @@
     <dependencies>
       <dependency id="PRF.Utils.CoreComponents" version="1.0" />
       <dependency id="Newtonsoft.Json" version="12.0" />
-      
     </dependencies>
-
   </metadata>
-  <files>
-    <file src="bin\$configuration$\PRF.Utils.WPF.dll" target="lib\net462" />
-    <file src="bin\$configuration$\PRF.Utils.WPF.xml" target="lib\net462" />
-  </files>
-
 </package>
