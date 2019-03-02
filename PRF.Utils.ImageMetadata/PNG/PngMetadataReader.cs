@@ -45,30 +45,25 @@ namespace PRF.Utils.ImageMetadata.PNG
                 throw new Exception($"Erreur lors de l'extraction des métadonnées de l'image: {imagePath}. {Environment.NewLine} => Exception: {e}", e);
             }
         }
-
-        public static List<MetadataKeyValue> GetMetadata(this FileInfo imagePath)
-        {
-            return GetMetadata(imagePath.FullName);
-        }
-
-        public static List<MetadataKeyValue> GetMetadata(this string imagePath)
+        
+        public static List<MetadataKeyValue> GetMetadata(this FileInfo image)
         {
             try
             {
                 try
                 {
-                    return ExtractHeaderMetadata(imagePath, BUFFER_SIZE);
+                    return ExtractHeaderMetadata(image.FullName, BUFFER_SIZE);
                 }
                 catch (FileFormatException)
                 {
                     // si l'on arrive pas à lire le format de l'image, on retente avec un buffer plus grand (mais une seule fois)
-                    return ExtractHeaderMetadata(imagePath, BUFFER_SIZE * 2);
+                    return ExtractHeaderMetadata(image.FullName, BUFFER_SIZE * 2);
                 }
             }
             catch (Exception e)
             {
                 // relance une exception avec un message plus spécifique et l'excetion source en innerException
-                throw new Exception($"Erreur lors de l'extraction des métadonnées de l'image: {imagePath}. {Environment.NewLine} => Exception: {e}", e);
+                throw new Exception($"Erreur lors de l'extraction des métadonnées de l'image: {image.FullName}. {Environment.NewLine} => Exception: {e}", e);
             }
         }
 

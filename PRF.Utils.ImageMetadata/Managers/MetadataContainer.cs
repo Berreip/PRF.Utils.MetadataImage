@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using PRF.Utils.CoreComponents.Extensions;
 using PRF.Utils.ImageMetadata.Configuration;
-using PRF.Utils.ImageMetadata.Helpers;
 using PRF.Utils.ImageMetadata.PNG;
 
 namespace PRF.Utils.ImageMetadata.Managers
