@@ -1,26 +1,21 @@
 ﻿namespace PRF.Utils.ImageMetadata.Configuration
 {
-    public class RawMetadata
+    internal class MetadataKeyValue
     {
-        public RawMetadata(string key, object value)
+        public MetadataKeyValue(string key, object value)
         {
             Key = key;
             Value = value;
         }
 
         /// <summary>
-        /// Query id
+        /// la clé identifiant la métadonnée (issue d'une enum normalement)
         /// </summary>
         public string Key { get; }
 
         /// <summary>
-        /// Query value
+        /// la valeur de la métadonnée sour forme de string
         /// </summary>
         public object Value { get; }
-
-        public string WriteValue()
-        {
-            return Value.ToString();
-        }
     }
 }

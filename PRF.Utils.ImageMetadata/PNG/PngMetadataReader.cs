@@ -1,37 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using PRF.Utils.CoreComponents.JSON;
 using PRF.Utils.ImageMetadata.Configuration;
+using PRF.Utils.ImageMetadata.Helpers;
 
 namespace PRF.Utils.ImageMetadata.PNG
 {
-    public static class PngMetadataReader
+    internal static class PngMetadataReader
     {
         private const int OFFSET = 0; // par du début du fichier = offset inutile mais plus clair que mettre '0' en dur
-        private const int BUFFER_SIZE = 6144; // on commence par lire les premiers bytes du fichier (en général, ça suffit dans notre cas mais 2048 ne suffit pas)
+        private const int BUFFER_SIZE = 4096; // on commence par lire les premiers bytes du fichier (2048 en général, ça suffit dans notre cas mais ne suffit souvent pas)
 
         /// <summary>
         /// Récupère en asynchrone les métadonnées d'une image
         /// </summary>
         /// <param name="imagePath">le chemin du fichier</param>
         /// <param name="ctsToken">le token d'annulation</param>
-        /// <param name="filters">les filtres identifiants les balises ("tEXt" "Parameters" pour IH500)</param>
-        public static async Task<List<RawMetadata>> GetMetadataAsync(string imagePath, CancellationToken ctsToken, params string[] filters)
+        public static async Task<List<MetadataKeyValue>> GetMetadataAsync(string imagePath, CancellationToken ctsToken)
         {
             try
             {
                 try
                 {
-                    return await ExtractHeaderMetadataAsync(imagePath, BUFFER_SIZE, ctsToken, filters).ConfigureAwait(false);
+                    return await ExtractHeaderMetadataAsync(imagePath, BUFFER_SIZE, ctsToken).ConfigureAwait(false);
                 }
                 catch (FileFormatException)
                 {
                     // si l'on arrive pas à lire le format de l'image, on retente avec un buffer plus grand (mais une seule fois)
-                    return await ExtractHeaderMetadataAsync(imagePath, BUFFER_SIZE * 2, ctsToken, filters).ConfigureAwait(false);
+                    return await ExtractHeaderMetadataAsync(imagePath, BUFFER_SIZE * 2, ctsToken).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException)
@@ -46,23 +46,23 @@ namespace PRF.Utils.ImageMetadata.PNG
             }
         }
 
-        public static List<RawMetadata> GetMetadata(this FileInfo imagePath, params string[] filters)
+        public static List<MetadataKeyValue> GetMetadata(this FileInfo imagePath)
         {
-            return GetMetadata(imagePath.FullName, filters);
+            return GetMetadata(imagePath.FullName);
         }
 
-        public static List<RawMetadata> GetMetadata(this string imagePath, params string[] filters)
+        public static List<MetadataKeyValue> GetMetadata(this string imagePath)
         {
             try
             {
                 try
                 {
-                    return ExtractHeaderMetadata(imagePath, BUFFER_SIZE, filters);
+                    return ExtractHeaderMetadata(imagePath, BUFFER_SIZE);
                 }
                 catch (FileFormatException)
                 {
                     // si l'on arrive pas à lire le format de l'image, on retente avec un buffer plus grand (mais une seule fois)
-                    return ExtractHeaderMetadata(imagePath, BUFFER_SIZE * 2, filters);
+                    return ExtractHeaderMetadata(imagePath, BUFFER_SIZE * 2);
                 }
             }
             catch (Exception e)
@@ -72,7 +72,7 @@ namespace PRF.Utils.ImageMetadata.PNG
             }
         }
 
-        private static async Task<List<RawMetadata>> ExtractHeaderMetadataAsync(string imagePath, int bufferSize, CancellationToken ctsToken, params string[] filters)
+        private static async Task<List<MetadataKeyValue>> ExtractHeaderMetadataAsync(string imagePath, int bufferSize, CancellationToken ctsToken)
         {
             ctsToken.ThrowIfCancellationRequested();
             using (var fs = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, true))
@@ -85,12 +85,12 @@ namespace PRF.Utils.ImageMetadata.PNG
 
                     return BitmapDecoder
                         .Create(ms, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None)
-                        .Frames[0].Metadata is BitmapMetadata bitmapMetaData ? ExtractMetadataFiltered(bitmapMetaData, filters) : new List<RawMetadata>();
+                        .Frames[0].Metadata is BitmapMetadata bitmapMetaData ? ExtractMetadataFiltered(bitmapMetaData) : new List<MetadataKeyValue>();
                 }
             }
         }
 
-        private static List<RawMetadata> ExtractHeaderMetadata(string imagePath, int bufferSize, params string[] filters)
+        private static List<MetadataKeyValue> ExtractHeaderMetadata(string imagePath, int bufferSize)
         {
             using (var fs = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, true))
             {
@@ -98,47 +98,21 @@ namespace PRF.Utils.ImageMetadata.PNG
                 //lit seulement le début du fichier
                 using (var ms = new MemoryStream(buffer, OFFSET, fs.Read(buffer, OFFSET, bufferSize)))
                 {
-                    return BitmapDecoder
-                        .Create(ms, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None)
-                        .Frames[0].Metadata is BitmapMetadata bitmapMetaData ? ExtractMetadataFiltered(bitmapMetaData, filters) : new List<RawMetadata>();
+                    return BitmapDecoder.Create(ms, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None).Frames[0].Metadata is BitmapMetadata bitmapMetaData 
+                        ? ExtractMetadataFiltered(bitmapMetaData) 
+                        : new List<MetadataKeyValue>();
                 }
             }
         }
 
-        private static List<RawMetadata> ExtractMetadataFiltered(BitmapMetadata bitmapMetadata, params string[] filters)
+        private static List<MetadataKeyValue> ExtractMetadataFiltered(BitmapMetadata bitmapMetadata)
         {
-            var rawMetadataItems = new List<RawMetadata>();
-            foreach (var query in bitmapMetadata.Where(o => filters.Any(o.Contains)))
+            var currentQuery = bitmapMetadata.GetQuery(ConstantsMetadata.PNG_NATIVE_IMAGE_FORMAT_METADATA_TEXT);
+            if (currentQuery is string str)
             {
-                var queryReader = bitmapMetadata.GetQuery(query);
-                if (queryReader == null) continue;
-                if (!(queryReader is BitmapMetadata innerBitmapMetadata))
-                {
-                    rawMetadataItems.Add(new RawMetadata(query, queryReader));
-                }
-                else
-                {
-                    Extract(rawMetadataItems, innerBitmapMetadata, query);
-                }
+                return str.DeserializeFromJson<List<MetadataKeyValue>>();
             }
-            return rawMetadataItems;
-        }
-
-        private static void Extract(List<RawMetadata> rawMetadataItems, BitmapMetadata bitmapMetadata, string query)
-        {
-            foreach (var relativeQuery in bitmapMetadata)
-            {
-                var queryReader = bitmapMetadata.GetQuery(relativeQuery);
-                if (queryReader == null) continue;
-                if (!(queryReader is BitmapMetadata innerBitmapMetadata))
-                {
-                    rawMetadataItems.Add(new RawMetadata(query + relativeQuery, queryReader));
-                }
-                else
-                {
-                    Extract(rawMetadataItems, innerBitmapMetadata, query + relativeQuery);
-                }
-            }
+            return new List<MetadataKeyValue>();
         }
     }
 }
